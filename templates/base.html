@@ -1,0 +1,14 @@
+<html>
+    <head>
+      {% if title %}
+      <title>{{ title }} - Message Wall</title>
+      {% else %}
+      <title>Welcome to Message Wall</title>
+      {% endif %}
+    </head>
+    <body>
+        <div>Message Wall: <a href="/index">Home</a></div>
+        <hr>
+        {% block content %}{% endblock %}
+    </body>
+</html>
