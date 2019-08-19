@@ -2,11 +2,25 @@
 # A very simple Flask Hello World app for you to get started with...
 
 from flask import Flask, render_template, flash, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
 from config import Config
 from forms import LoginForm
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
+    username="endlessLoop",
+    password="Atlantic",
+    hostname="endlessLoop.mysql.pythonanywhere-services.com",
+    databasename="endlessLoop$comments",
+)
+app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
+app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
+
 @app.route('/')
 @app.route('/index')
 def index():
@@ -23,6 +37,13 @@ def index():
     ]
 
     return render_template('index.html', title='Home', user=user, posts=posts)
+
+class Comment(db.Model):
+
+    __tablename__ = "comments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(4096))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
