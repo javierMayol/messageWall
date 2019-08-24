@@ -9,6 +9,8 @@ from flask_mail import Mail
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from flask_babel import Babel, _, get_locale, lazy_gettext as _l
+from flask import jsonify
+from guess_language import guess_language
 from config import Config
 from werkzeug.urls import url_parse
 from datetime import datetime
@@ -25,8 +27,6 @@ login.login_message = _l('Please log in to access this page.')
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 babel = Babel(app)
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 mail = Mail(app)
 
 SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
@@ -39,10 +39,15 @@ app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
 app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
 from models import User, Post
 from forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm
 from emails import send_password_reset_email
+from translate import translate
 import errors 
+import cli
 
 if not app.debug:
     if app.config['MAIL_SERVER']:
@@ -89,7 +94,12 @@ def before_request():
 def index():
     form = PostForm()
     if form.validate_on_submit():
-        post = Post(body=form.post.data, author=current_user)
+        language = guess_language(form.post.data)
+        if language == 'UNKNOWN' or len(language) > 5:
+            language = ''
+        post = Post(body=form.post.data, author=current_user,
+                    language=language)
+        #post = Post(body=form.post.data, author=current_user)
         db.session.add(post)
         db.session.commit()
         flash(_('Your post is now live!'))
@@ -246,6 +256,13 @@ def reset_password(token):
         flash(_('Your password has been reset.'))
         return redirect(url_for('login'))
     return render_template('reset_password.html', form=form)
+
+@app.route('/translate', methods=['POST'])
+@login_required
+def translate_text():
+    return jsonify({'text': translate(request.form['text'],
+                                      request.form['source_language'],
+                                      request.form['dest_language'])})
 
 @app.shell_context_processor
 def make_shell_context():
