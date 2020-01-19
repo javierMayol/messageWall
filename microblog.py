@@ -1,5 +1,6 @@
-from flask_app import create_app, db, cli
+from flask_app import create_app, db
 from models import User, Post
+import cli
 
 app = create_app()
 cli.register(app)
