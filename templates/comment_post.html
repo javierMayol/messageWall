@@ -18,19 +18,6 @@
                 <br>
                 <span id="post{{ post.id }}">{{ post.body }}</span>
                 
-                <span id="commenting{{ post.id }}">
-                <br>
-                <a href="{{ url_for('main.comment', post_id=post.id)}}">{{ _('comment') }}</a>
-               <!-- 
-                <a href="#" data-toggle="popover"
-                    data-content=
-                       "<input id='userinput'><br>
-                       <button onclick='comment(post.id)'>Submit </button>"
-                    class="container">{{ _('comment') }}</a>
-                -->
-                </span>
-                <span id="all_comments{{ post.id }}">{{ post.comments }}</span>
-
                 {% if post.language and post.language != g.locale %}
                 <br><br>
                 <span id="translation{{ post.id }}">
@@ -44,16 +31,3 @@
             </td>
         </tr>
     </table>
-    <script>
-    function comment(post_id, destElem){
-        var uc = document.getElementById('userinput').value;
-        if(uc){
-            $.ajax('{{ url_for("main.comment_popup") }}').done(
-                function(response) {
-                    $('#').text(response['post_id'])
-                }).fail(function() {
-                    $('#').text("{{ _('Error: Could not contact server.') }}");
-                });
-        }
-    }
-    </script>

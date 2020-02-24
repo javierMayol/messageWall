@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<td width="64" style="border: 0px;"></td>
+<td style="border: 0px;">
+    {% if  post %}
+        {% include 'comment_post.html' %}
+    {% else %}
+        <h2> {{ _('Post: ') }} {{ _(body) }}</h2>
+    {% endif %}
+        <div class="row">
+        <div class="col-md-4">
+            {{ wtf.quick_form(form) }}
+        </div>
+            {% for comment in comments %}
+                {% if comment.post_id == post.id %} 
+                    {% include '_comment.html' %}
+                {% endif %}
+            {% endfor %}
+        </div>
+{% endblock %}

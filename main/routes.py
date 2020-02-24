@@ -5,8 +5,8 @@ from flask_login import LoginManager, current_user, login_required
 from flask_babel import _, get_locale
 from guess_language import guess_language
 from flask_app import db
-from main.forms import EditProfileForm, PostForm, MessageForm
-from models import User, Post, Message, Notification
+from main.forms import EditProfileForm, PostForm, MessageForm, CommentForm
+from models import User, Post, Message, Notification, Comment
 from translate import translate
 from main import bp
 
@@ -35,13 +35,15 @@ def index():
     page = request.args.get('page', 1, type=int)
     posts = current_user.followed_posts().paginate(
         page, current_app.config['POSTS_PER_PAGE'], False)    
+    comments = Comment.query.order_by(Comment.timestamp.desc()).paginate(
+        page, current_app.config['POSTS_PER_PAGE'], False)
     next_url = url_for('main.index', page=posts.next_num) \
         if posts.has_next else None
     prev_url = url_for('main.index', page=posts.prev_num) \
         if posts.has_prev else None
     return render_template("index.html", title='Home', form=form,
                            posts=posts.items, next_url=next_url,
-                           prev_url=prev_url)
+                           prev_url=prev_url, comments=comments.items)
 
 @bp.route('/user/<username>')
 @login_required
@@ -73,6 +75,45 @@ def edit_profile():
     return render_template('edit_profile.html', title=_('Edit Profile'),
                            form=form)
 
+@bp.route('/comment_popup', methods=['POST'])
+@login_required
+def comment_popup():
+    post_id = request.args.get('post_id')
+    post = Post.query.filter_by(id=post_id).first_or_404()
+    body = request.args.get('body')
+    language = guess_language(form.comment.data)
+    if language == 'UNKNOWN' or len(language) > 5:
+        language = ''
+    flash(_('Your comment is now live!'))
+    return jsonify([{
+        'body': body,
+        'author': current_user,
+        'language': language
+    }])
+
+@bp.route('/comment', methods=['GET', 'POST'])
+@login_required
+def comment():
+    form = CommentForm()
+    page = request.url
+    post_id = request.args.get('post_id')
+    post = Post.query.filter_by(id=post_id).first_or_404()
+    body = request.args.get('body')
+    comments = Comment.query.filter_by(post_id=post_id).order_by(Comment.timestamp.desc()) 
+    #comments = comments.query.order_by(comments.timestamp.desc())
+    if form.validate_on_submit():
+        language = guess_language(form.comment.data)
+        if language == 'UNKNOWN' or len(language) > 5:
+            language = ''
+        comment = Comment(body=form.comment.data, author=current_user,
+                    language=language, post_id=post_id)
+        db.session.add(comment)
+        db.session.commit()
+        flash(_('Your comment is now live!'))
+        return redirect(page) #(url_for('main.explore')) 
+    return render_template('comment.html', title=_('Comment'),
+           form=form, body=body, post=post, comments=comments)
+
 
 @bp.route('/explore')
 @login_required
@@ -80,13 +121,15 @@ def explore():
     page = request.args.get('page', 1, type=int)
     posts = Post.query.order_by(Post.timestamp.desc()).paginate(
         page, current_app.config['POSTS_PER_PAGE'], False)
+    comments = Comment.query.order_by(Comment.timestamp.desc()).paginate(
+        page, current_app.config['POSTS_PER_PAGE'], False)
     next_url = url_for('main.explore', page=posts.next_num) \
         if posts.has_next else None
     prev_url = url_for('main.explore', page=posts.prev_num) \
         if posts.has_prev else None
     return render_template('index.html', title=_('Explore'),
-                           posts=posts.items, next_url=next_url,
-                           prev_url=prev_url)
+                           posts=posts.items, comments=comments.items,
+                           next_url=next_url,prev_url=prev_url)
 
 
 @bp.route('/follow/<username>')
@@ -143,6 +186,8 @@ def send_message(recipient):
     if form.validate_on_submit():
         msg = Message(author=current_user, recipient=user,
                 body=form.message.data)
+        db.session.add(msg)
+        user.add_notification('unread_message_count', user.new_messages())
         db.session.commit()
         flash(_('Your message has been sent.'))
         return redirect(url_for('main.user', username=recipient))
@@ -170,8 +215,8 @@ def messages():
 @login_required
 def notifications():
     since = request.args.get('since',0.0, type=float)
-    notfications = current_user.notifications.filter(
-            Notifications.timestamp > since).order_by(Notification.timestamp.asc())
+    notifications = current_user.notifications.filter(
+            Notification.timestamp > since).order_by(Notification.timestamp.asc())
     return jsonify([{
         'name': n.name,
         'data': n.get_data(),

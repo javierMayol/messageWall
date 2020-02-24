@@ -9,6 +9,13 @@
     {% endif %}
     {% for post in posts %}
         {% include '_post.html' %}
+        {% if comments %}
+            {% for comment in comments %}
+                {% if comment.post_id == post.id %} 
+                    {% include '_comment.html' %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
     {% endfor %}
     <nav aria-label="...">
         <ul class="pager">
