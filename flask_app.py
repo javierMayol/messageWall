@@ -1,5 +1,5 @@
 
-# A very simple Flask Hello World app for you to get started with...
+# Flask App control script...
 
 import logging
 from logging.handlers import SMTPHandler, RotatingFileHandler
@@ -73,7 +73,7 @@ def create_app(config_class=Config):
 
         app.logger.setLevel(logging.INFO)
         app.logger.info('Message Wall startup')
-    return app
+    return app  
 
 @babel.localeselector
 def get_locale():
