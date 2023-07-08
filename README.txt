@@ -7,6 +7,24 @@ Description:
 This website uses a SQL-Alchemy database to support user login, user posts, and other functionalities
 and information about the user. 
 
+Important commands:
+
+    Uses python 3.7 environment. command line "workon venv" to initiate the environment.
+                                 command line "deactivate" to logoff the environment.
+
+    Git supported: Verify you're out of the Python environment, commands above, before executing git commands.
+        git status - tells about changes commited or not
+        git add <file> - adds the file or files that were modified to the branch
+        git commit -m"..." - commits the changes and adds a comment to the log.
+        git log -  logs with all commits done so far 
+
+    vi <file> - view or edit a file. To edit click 'i', to exit edit clic 'esc'.
+        quit (in view mode,'esc')
+            :q (quit) 
+            :wq (write and quit)
+            :!q (quit with bam, undo changes and quit)
+ 
+
 Tables for Message Wall database:
     +--------------------------------+
     | Tables_in_endlessLoop$comments |
