@@ -224,3 +224,23 @@ def notifications():
     } for n in notifications])
 
 
+@bp.route('/delete', methods=['GET', 'POST'])
+@login_required
+def delete():
+    form = CommentForm()
+    page = request.url
+    post_id = request.args.get('post_id')
+    post = Post.query.filter_by(id=post_id).first_or_404()
+    body = request.args.get('body')
+    comments = Comment.query.filter_by(post_id=post_id).order_by(Comment.timestamp.desc()) 
+    comment_id = request.arg.get('id')
+
+    try:
+        db.session.delete(comment_id)
+        db.session.commit()
+        flash(_('record deleted succesfully!'))
+        return redirect(page) #(url_for('main.explore')) 
+    except:
+        flash(_('something went wrong.'))
+        return render_template('comment.html', title=_('Comment'),
+           form=form, body=body, post=post, comments=comments)
