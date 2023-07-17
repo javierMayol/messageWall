@@ -20,9 +20,11 @@
                 <span id="comment{{ comment.id }}">{{ comment.body }}</span>
                 {% if comment.language and comment.language != g.locale %}
                 <br>
+                <!--
                 <div id="delete{{ comment.id }}">
-                    {% include 'delete.html' %}
+                    {% include 'delete.html' %} 
                 </div>
+                -->
                 <span id="translation{{ comment.id }}">
                     <a href="javascript:translate(
                                 '#comment{{ comment.id }}',

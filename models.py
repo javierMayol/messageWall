@@ -39,6 +39,8 @@ class User(UserMixin, db.Model):
     last_message_read_time = db.Column(db.DateTime)
     notifications = db.relationship('Notification', backref='user',
             lazy='dynamic')
+    deleted=db.Column(db.Boolean(), deafult=False)#db.DateTime, default='NULL')
+    query_class= QueryWithSoftDelete
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -69,7 +71,7 @@ class User(UserMixin, db.Model):
         return jwt.encode(
             {'reset_password': self.id, 'exp': time() + expires_in},
             current_app.config['SECRET_KEY'], algorithm='HS256').decode('utf-8')
-
+        
     @staticmethod
     def verify_reset_password_token(token):
         try:
@@ -143,3 +145,16 @@ class Notification(db.Model):
 
     def get_data(self):
         return json.loads(str(self.payload_json))
+
+class QueryWithSoftDelete(BaseQuery):
+    def __new__(cls, *args, **kwargs):
+        obj = super(QueryWithSoftDelete, cls).__new__(cls)
+        if len(args) > 0:
+            super(QueryWithSoftDelete, obj).__init__(*args, **kwargs)
+            return obj.filter_by(delete=False)
+        return obj
+    def __init__(self, *args, **kwargs):
+        pass
+    def with_deleted(self):
+        return self.__class__(self._only_full_mapper_zero('get'),
+                session=db.session(), _with_delete=True)
